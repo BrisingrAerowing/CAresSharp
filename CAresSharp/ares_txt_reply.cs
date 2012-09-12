@@ -8,7 +8,7 @@ namespace CAresSharp
 		public IntPtr txt;
 		public IntPtr txtlength;
 
-		unsafe public static int length(ares_txt_reply *reply)
+		unsafe static int length(ares_txt_reply *reply)
 		{
 			int n = 0;
 			for (ares_txt_reply *i = reply; i != null; i = i->next) {
@@ -17,8 +17,9 @@ namespace CAresSharp
 			return n;
 		}
 
-		unsafe public static string[] to_array(ares_txt_reply *reply)
+		unsafe public static string[] convert(IntPtr ptr)
 		{
+			ares_txt_reply *reply = (ares_txt_reply *)ptr;
 			int n = length(reply);
 			int j = 0;
 			string[] res = new string[n];

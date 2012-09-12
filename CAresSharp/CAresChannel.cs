@@ -196,28 +196,29 @@ namespace CAresSharp
 				cb.End(Ensure.Exception(r), null);
 			} else {
 				var he = hostent.GetHostent(host);
-				ares_free_hostent(host);
+				hostent.ares_free_hostent(host);
 				cb.End(null, he);
 			}
 		}
 		
 		delegate int AresParseDelegate(IntPtr buf, int alen, out IntPtr host);
-		
-		static void Parse(AresCallback<Hostent> cb, AresParseDelegate ares_parse, IntPtr buf, int alen)
+
+		static void Parse<T>(IntPtr arg, IntPtr abuf, int alen, AresParseDelegate parse, Func<IntPtr, T> convert) where T : class
 		{
-			IntPtr host;
-			int r = ares_parse(buf, alen, out host);
-			if (r != 0) {
-				cb.End(Ensure.Exception(r), null);
+			var cb = Callback.GetObject<AresCallback<T>>(arg);
+			IntPtr ptr;
+			var ret = parse(abuf, alen, out ptr);
+			if (ret != 0) {
+				cb.End(Ensure.Exception(ret), null);
 			} else {
-				var he = hostent.GetHostent(host);
-				ares_free_hostent(host);
-				cb.End(null, he);
+				cb.End(null, convert(ptr));
 			}
 		}
 
-		[DllImport("cares")]
-		static extern void ares_free_hostent(IntPtr host);
+		static void Parse(IntPtr arg, IntPtr abuf, int alen, AresParseDelegate parse)
+		{
+			Parse<Hostent>(arg, abuf, alen, parse, hostent.convert);
+		}
 
 		[DllImport("cares")]
 		static extern int ares_parse_a_reply(IntPtr buf, int alen, out IntPtr host, IntPtr addrttls, IntPtr naddrttls);
@@ -305,10 +306,9 @@ namespace CAresSharp
 		[DllImport("cares")]
 		unsafe static extern int ares_parse_ns_reply(IntPtr abuf, int alen, out IntPtr host);
 
-		static void CallbackNS(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
+		static void CallbackNS(IntPtr arg, int status, int timeouts, IntPtr abuf, int alen)
 		{
-			var cb = Callback.GetObject<AresCallback<Hostent>>(arg);
-			Parse(cb, ares_parse_ns_reply, buf, alen);
+			Parse(arg, abuf, alen, ares_parse_ns_reply);
 		}
 
 		#endregion
@@ -316,6 +316,7 @@ namespace CAresSharp
 		#region PTR
 		#endregion
 */
+
 		#region SOA
 
 		public void ResolveSOA(string host, Action<Exception, SOAReply> callback)
@@ -325,20 +326,11 @@ namespace CAresSharp
 		}
 
 		[DllImport("cares")]
-		unsafe static extern int ares_parse_soa_reply(IntPtr abuf, int alen, out ares_soa_reply *reply);
+		unsafe static extern int ares_parse_soa_reply(IntPtr abuf, int alen, out IntPtr reply);
 
-		unsafe static void CallbackSOA(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
+		unsafe static void CallbackSOA(IntPtr arg, int status, int timeouts, IntPtr abuf, int alen)
 		{
-			var cb = Callback.GetObject<AresCallback<SOAReply>>(arg);
-			ares_soa_reply *reply;
-			int r = ares_parse_soa_reply(buf, alen, out reply);
-			if (r != 0) {
-				cb.End(Ensure.Exception(r), null);
-			} else {
-				var ret = new SOAReply(reply);
-				ares_free_data((IntPtr)reply);
-				cb.End(null, ret);
-			}
+			Parse<SOAReply>(arg, abuf, alen, ares_parse_soa_reply, ares_soa_reply.convert);
 		}
 
 		#endregion
@@ -352,18 +344,11 @@ namespace CAresSharp
 		}
 
 		[DllImport("cares")]
-		unsafe static extern int ares_parse_srv_reply(IntPtr abuf, int alen, out ares_srv_reply* reply);
+		unsafe static extern int ares_parse_srv_reply(IntPtr abuf, int alen, out IntPtr reply);
 
 		unsafe static void CallbackSRV(IntPtr arg, int status, int timeouts, IntPtr abuf, int alen)
 		{
-			var cb = Callback.GetObject<AresCallback<SRVReply[]>>(arg);
-			ares_srv_reply *reply;
-			int r = ares_parse_srv_reply(abuf, alen, out reply);
-			if (r != 0) {
-				cb.End(Ensure.Exception(r), null);
-			} else {
-				cb.End(null, ares_srv_reply.to_array(reply));
-			}
+			Parse<SRVReply[]>(arg, abuf, alen, ares_parse_srv_reply, ares_srv_reply.convert);
 		}
 		#endregion
 
@@ -376,18 +361,11 @@ namespace CAresSharp
 		}
 
 		[DllImport("cares")]
-		unsafe static extern int ares_parse_txt_reply(IntPtr abuf, int alen, out ares_txt_reply* reply);
+		unsafe static extern int ares_parse_txt_reply(IntPtr abuf, int alen, out IntPtr reply);
 
 		unsafe static void CallbackTXT(IntPtr arg, int status, int timeouts, IntPtr abuf, int alen)
 		{
-			var cb = Callback.GetObject<AresCallback<string[]>>(arg);
-			ares_txt_reply *reply;
-			int r = ares_parse_txt_reply(abuf, alen, out reply);
-			if (r != 0) {
-				cb.End(Ensure.Exception(r), null);
-			} else {
-				cb.End(null, ares_txt_reply.to_array(reply));
-			}
+			Parse<string[]>(arg, abuf, alen, ares_parse_txt_reply, ares_txt_reply.convert);
 		}
 
 		#endregion

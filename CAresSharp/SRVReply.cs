@@ -10,7 +10,7 @@ namespace CAresSharp
 		public ushort weight;
 		public ushort port;
 
-		unsafe public static int length(ares_srv_reply *reply)
+		unsafe static int length(ares_srv_reply *reply)
 		{
 			int n = 0;
 			for (var i = reply; i != null; i = i->next) {
@@ -19,8 +19,9 @@ namespace CAresSharp
 			return n;
 		}
 
-		unsafe public static SRVReply[] to_array(ares_srv_reply *reply)
+		unsafe public static SRVReply[] convert(IntPtr ptr)
 		{
+			ares_srv_reply *reply = (ares_srv_reply *)ptr;
 			int j = 0;
 			var res = new SRVReply[ares_srv_reply.length(reply)];
 			for (var i = reply; i != null; i = i->next) {

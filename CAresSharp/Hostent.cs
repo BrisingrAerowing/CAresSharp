@@ -71,9 +71,19 @@ namespace CAresSharp
 			return new Hostent(Hostname, ToAddress(), ToAliases());
 		}
 
+		[DllImport("cares")]
+		public static extern void ares_free_hostent(IntPtr host);
+
 		public static Hostent GetHostent(IntPtr ptr)
 		{
 			return ((hostent *)ptr)->ToHostent();
+		}
+
+		public static Hostent convert(IntPtr ptr)
+		{
+			var ret = GetHostent(ptr);
+			ares_free_hostent(ptr);
+			return ret;
 		}
 
 		public string Hostname {

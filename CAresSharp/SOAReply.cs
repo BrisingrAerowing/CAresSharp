@@ -10,6 +10,14 @@ namespace CAresSharp
 		public uint retry;
 		public uint expire;
 		public uint minttl;
+
+		public static SOAReply convert(IntPtr ptr)
+		{
+			ares_soa_reply *reply = (ares_soa_reply *)ptr;
+			var ret = new SOAReply(reply);
+			CAresChannel.ares_free_data(ptr);
+			return ret;
+		}
 	}
 
 	public class SOAReply

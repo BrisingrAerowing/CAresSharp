@@ -367,12 +367,6 @@ namespace CAresSharp
 
 		#region TXT
 
-		unsafe struct ares_txt_reply {
-			public ares_txt_reply *next;
-			public IntPtr txt;
-			public IntPtr length;
-		}
-
 		public void ResolveTXT(string host, Action<Exception, string[]> callback)
 		{
 			AresCallback<string[]> cb = new AresCallback<string[]>(callback);
@@ -382,15 +376,6 @@ namespace CAresSharp
 		[DllImport("cares")]
 		unsafe static extern int ares_parse_txt_reply(IntPtr abuf, int alen, out ares_txt_reply* reply);
 
-		unsafe static int length(ares_txt_reply *reply)
-		{
-			int n = 0;
-			for (ares_txt_reply *i = reply; i != null; i = i->next) {
-				n++;
-			}
-			return n;
-		}
-
 		unsafe static void CallbackTXT(IntPtr arg, int status, int timeouts, IntPtr abuf, int alen)
 		{
 			var cb = Callback.GetObject<AresCallback<string[]>>(arg);
@@ -399,14 +384,7 @@ namespace CAresSharp
 			if (r != 0) {
 				cb.End(Ensure.Exception(r), null);
 			} else {
-				int n = length(reply);
-				int j = 0;
-				string[] res = new string[n];
-				for (ares_txt_reply *i = reply; i != null; i = i->next) {
-					res[j] = Marshal.PtrToStringAnsi(i->txt, (int)i->length);
-					j++;
-				}
-				cb.End(null, res);
+				cb.End(null, ares_txt_reply.to_array(reply));
 			}
 		}
 

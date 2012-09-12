@@ -26,6 +26,7 @@ namespace CAresSharp
 			{
 				if (Handle != IntPtr.Zero) {
 					GCHandle.Free();
+					UV.Free(Handle);
 					Handle = IntPtr.Zero;
 				}
 			}

@@ -294,15 +294,14 @@ namespace CAresSharp
 			}
 		}
 		
-/*
 		#region NS
-		
+
 		public void ResolveNS(string host, Action<Exception, Hostent> callback)
 		{
 			AresCallback<Hostent> cb = new AresCallback<Hostent>(callback);
 			ares_query(channel, host, 1, ns_type.ns_t_ns, CallbackNS, cb.Handle);
 		}
-		
+
 		[DllImport("cares")]
 		unsafe static extern int ares_parse_ns_reply(IntPtr abuf, int alen, out IntPtr host);
 
@@ -311,9 +310,9 @@ namespace CAresSharp
 			var cb = Callback.GetObject<AresCallback<Hostent>>(arg);
 			Parse(cb, ares_parse_ns_reply, buf, alen);
 		}
-		
+
 		#endregion
-		
+/*
 		#region PTR
 		#endregion
 		

@@ -65,51 +65,30 @@ namespace CAresSharp
 		ns_t_max = 65536
 	};
 	
-	
+	/// <summary>
+	/// class holding alloc and free functions
+	/// </summary>
 	class UV
 	{
 		public static IntPtr Alloc(int size)
 		{
-			return CAresChannel.DefaultMemoryFunctions.Alloc(size);
+			return Marshal.AllocHGlobal(size);
 		}
-		
+
 		public static void Free(IntPtr ptr)
 		{
-			CAresChannel.DefaultMemoryFunctions.Free(ptr);
+			Marshal.FreeHGlobal(ptr);
 		}
 	}
-	
-	public class MemoryFunctions
-	{
-		public delegate IntPtr AllocDelegate(int size);
-		public delegate void FreeDelegate(IntPtr ptr);
-		
-		public AllocDelegate Alloc;
-		public FreeDelegate Free;
-		
-		public MemoryFunctions(AllocDelegate alloc, FreeDelegate free)
-		{
-			Alloc = alloc;
-			Free = free;
-		}
-	}
-	
+
 	public class CAresChannel : IDisposable
 	{
-		public static MemoryFunctions DefaultMemoryFunctions = new MemoryFunctions((size) => {
-			return Marshal.AllocHGlobal(size);
-		}, (ptr) => {
-			Marshal.FreeHGlobal(ptr);
-		});
-		
 		IntPtr channel;
 		public IntPtr Handle {
 			get {
 				return channel;
 			}
 		}
-		
-		public MemoryFunctions MemoryFunctions { protected set; get; }
 		
 		[DllImport("cares")]
 		static extern int ares_init(ref IntPtr channel);
@@ -129,21 +108,6 @@ namespace CAresSharp
 			int ret = ares_init_options(ref channel, ref ops, (int)ARES_OPT.SOCK_STATE_CB);
 			Ensure.Success(ret);
 		}
-		
-		
-		/*
-		public CAresChannel(MemoryFunctions memoryFunctions)
-		{
-			MemoryFunctions = memoryFunctions;
-			
-			Init();
-		}
-		
-		public CAresChannel()
-			: this(DefaultMemoryFunctions)
-		{
-		}
-		*/
 		
 		public CAresChannel()
 		{

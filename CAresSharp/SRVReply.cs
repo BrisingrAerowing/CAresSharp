@@ -27,7 +27,17 @@ namespace CAresSharp
 				res[j] = new SRVReply(i);
 				j++;
 			}
+			free(reply);
 			return res;
+		}
+
+		unsafe static void free(ares_srv_reply *reply)
+		{
+			if (reply == null) {
+				return;
+			}
+			free(reply->next);
+			CAresChannel.ares_free_data((IntPtr)reply);
 		}
 	};
 

@@ -278,7 +278,7 @@ namespace CAresSharp
 		unsafe static extern int ares_parse_mx_reply(IntPtr abuf, int alen, out IntPtr mx_out);
 		
 		[DllImport("cares")]
-		static extern void ares_free_data(IntPtr ptr);
+		internal static extern void ares_free_data(IntPtr ptr);
 
 		static void CallbackMx(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
 		{
@@ -335,7 +335,9 @@ namespace CAresSharp
 			if (r != 0) {
 				cb.End(Ensure.Exception(r), null);
 			} else {
-				cb.End(null, new SOAReply(reply));
+				var ret = new SOAReply(reply);
+				ares_free_data((IntPtr)reply);
+				cb.End(null, ret);
 			}
 		}
 

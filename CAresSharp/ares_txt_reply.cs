@@ -26,7 +26,17 @@ namespace CAresSharp
 				res[j] = Marshal.PtrToStringAnsi(i->txt, (int)i->txtlength);
 				j++;
 			}
+			free(reply);
 			return res;
+		}
+
+		unsafe static void free(ares_txt_reply *reply)
+		{
+			if (reply == null) {
+				return;
+			}
+			free(reply->next);
+			CAresChannel.ares_free_data((IntPtr)reply);
 		}
 	}
 }

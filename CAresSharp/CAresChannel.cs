@@ -269,10 +269,10 @@ namespace CAresSharp
 			Resolve(host, AddressFamily.InterNetworkV6, callback);
 		}
 
-		public void ResolveMx(string host, Action<Exception, MailExchange[]> callback)
+		public void ResolveMX(string host, Action<Exception, MailExchange[]> callback)
 		{
 			AresCallback<MailExchange[]> cb = new AresCallback<MailExchange[]>(callback);
-			ares_query(channel, host, 1, ns_type.ns_t_mx, CallbackMx, cb.Handle);
+			ares_query(channel, host, 1, ns_type.ns_t_mx, CallbackMX, cb.Handle);
 		}
 		
 		[DllImport("cares")]
@@ -281,18 +281,9 @@ namespace CAresSharp
 		[DllImport("cares")]
 		internal static extern void ares_free_data(IntPtr ptr);
 
-		static void CallbackMx(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
+		static void CallbackMX(IntPtr arg, int status, int timeouts, IntPtr abuf, int alen)
 		{
-			var cb = Callback.GetObject<AresCallback<MailExchange[]>>(arg);
-			IntPtr reply;
-			int r = ares_parse_mx_reply(buf, alen, out reply);
-			if (r != 0) {
-				cb.End(Ensure.Exception(r), null);
-			} else {
-				var me = ares_mx_reply.ToMailExchange(reply);
-				ares_free_data(reply);
-				cb.End(null, me);
-			}
+			Parse<MailExchange[]>(arg, abuf, alen, ares_parse_mx_reply, ares_mx_reply.convert);
 		}
 		
 		#region NS

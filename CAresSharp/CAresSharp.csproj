@@ -44,7 +44,6 @@
     <Compile Include="CAresChannelOptions.cs" />
     <Compile Include="CAres.cs" />
     <Compile Include="Callbacks.cs" />
-    <Compile Include="ares_mx_reply.cs" />
     <Compile Include="CAresChannel.cs" />
     <Compile Include="SRVReply.cs" />
     <Compile Include="SOAReply.cs" />

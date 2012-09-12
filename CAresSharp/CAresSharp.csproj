@@ -47,6 +47,7 @@
     <Compile Include="ares_mx_reply.cs" />
     <Compile Include="CAresChannel.cs" />
     <Compile Include="SRVReply.cs" />
+    <Compile Include="SOAReply.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

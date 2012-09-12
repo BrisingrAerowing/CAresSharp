@@ -315,11 +315,31 @@ namespace CAresSharp
 /*
 		#region PTR
 		#endregion
-		
-		#region SOA
-		#endregion
-
 */
+		#region SOA
+
+		public void ResolveSOA(string host, Action<Exception, SOAReply> callback)
+		{
+			AresCallback<SOAReply> cb = new AresCallback<SOAReply>(callback);
+			ares_query(channel, host, 1, ns_type.ns_t_soa, CallbackSOA, cb.Handle);
+		}
+
+		[DllImport("cares")]
+		unsafe static extern int ares_parse_soa_reply(IntPtr abuf, int alen, out ares_soa_reply *reply);
+
+		unsafe static void CallbackSOA(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
+		{
+			var cb = Callback.GetObject<AresCallback<SOAReply>>(arg);
+			ares_soa_reply *reply;
+			int r = ares_parse_soa_reply(buf, alen, out reply);
+			if (r != 0) {
+				cb.End(Ensure.Exception(r), null);
+			} else {
+				cb.End(null, new SOAReply(reply));
+			}
+		}
+
+		#endregion
 
 		#region SRV
 

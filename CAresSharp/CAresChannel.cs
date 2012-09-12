@@ -205,32 +205,6 @@ namespace CAresSharp
 		}
 
 		[DllImport("cares")]
-		static extern int ares_parse_a_reply(IntPtr buf, int alen, out IntPtr host, IntPtr addrttls, IntPtr naddrttls);
-
-		static int ares_parse_a_reply2(IntPtr buf, int alen, out IntPtr host)
-		{
-			return ares_parse_a_reply(buf, alen, out host, IntPtr.Zero, IntPtr.Zero);
-		}
-
-		static void Callback4(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
-		{
-			Parse(arg, buf, alen, ares_parse_a_reply2);
-		}
-
-		[DllImport("cares")]
-		static extern int ares_parse_aaaa_reply(IntPtr buf, int alen, out IntPtr host, IntPtr addrttls, IntPtr naddrttls);
-
-		static int ares_parse_aaaa_reply2(IntPtr buf, int alen, out IntPtr host)
-		{
-			return ares_parse_aaaa_reply(buf, alen, out host, IntPtr.Zero, IntPtr.Zero);
-		}
-
-		static void Callback6(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
-		{
-			Parse(arg, buf, alen, ares_parse_aaaa_reply2);
-		}
-
-		[DllImport("cares")]
 		static extern void ares_query(IntPtr channel, string name, int dnsclass, ns_type type, Action<IntPtr, int, int, IntPtr, int> callback, IntPtr arg);
 
 		static void query<T>(IntPtr channel, string name, int dnsclass, ns_type type, Action<IntPtr, int, int, IntPtr, int> callback, Action<Exception, T> clrcb) where T : class
@@ -257,15 +231,49 @@ namespace CAresSharp
 			}
 		}
 
+		#region ipv4
+
 		public void Resolve(string host, Action<Exception, Hostent> callback)
 		{
 			Resolve(host, AddressFamily.InterNetwork, callback);
 		}
 
+		[DllImport("cares")]
+		static extern int ares_parse_a_reply(IntPtr buf, int alen, out IntPtr host, IntPtr addrttls, IntPtr naddrttls);
+
+		static int ares_parse_a_reply2(IntPtr buf, int alen, out IntPtr host)
+		{
+			return ares_parse_a_reply(buf, alen, out host, IntPtr.Zero, IntPtr.Zero);
+		}
+
+		static void Callback4(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
+		{
+			Parse(arg, buf, alen, ares_parse_a_reply2);
+		}
+
+		#endregion
+
+		#region ipv6
+
 		public void Resolve6(string host, Action<Exception, Hostent> callback)
 		{
 			Resolve(host, AddressFamily.InterNetworkV6, callback);
 		}
+
+		[DllImport("cares")]
+		static extern int ares_parse_aaaa_reply(IntPtr buf, int alen, out IntPtr host, IntPtr addrttls, IntPtr naddrttls);
+
+		static int ares_parse_aaaa_reply2(IntPtr buf, int alen, out IntPtr host)
+		{
+			return ares_parse_aaaa_reply(buf, alen, out host, IntPtr.Zero, IntPtr.Zero);
+		}
+
+		static void Callback6(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
+		{
+			Parse(arg, buf, alen, ares_parse_aaaa_reply2);
+		}
+
+		#endregion
 
 		[DllImport("cares")]
 		internal static extern void ares_free_data(IntPtr ptr);

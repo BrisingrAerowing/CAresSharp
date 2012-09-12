@@ -343,22 +343,6 @@ namespace CAresSharp
 
 		#region SRV
 
-		unsafe struct ares_srv_reply {
-		     public ares_srv_reply *next;
-		     public sbyte *host;
-		     public ushort priority;
-		     public ushort weight;
-		     public ushort port;
-		};
-
-		unsafe static int length(ares_srv_reply *reply) {
-			int n = 0;
-			for (var i = reply; i != null; i = i->next) {
-				n++;
-			}
-			return n;
-		}
-
 		public void ResolveSRV(string host, Action<Exception, SRVReply[]> callback)
 		{
 			AresCallback<SRVReply[]> cb = new AresCallback<SRVReply[]>(callback);
@@ -376,20 +360,7 @@ namespace CAresSharp
 			if (r != 0) {
 				cb.End(Ensure.Exception(r), null);
 			} else {
-				int j = 0;
-				int n = length(reply);
-				var res = new SRVReply[n];
-				for (var i = reply; i != null; i = i->next) {
-					res[j] = new SRVReply() {
-						Weight = (int)(i->weight),
-						Priority = (int)(i->priority),
-						Port = (int)(i->port),
-						Host = new string(i->host)
-					};
-					j++;
-				}
-
-				cb.End(null, res);
+				cb.End(null, ares_srv_reply.to_array(reply));
 			}
 		}
 		#endregion

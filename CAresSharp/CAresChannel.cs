@@ -154,6 +154,11 @@ namespace CAresSharp
 		static void Parse<T>(IntPtr arg, IntPtr abuf, int alen, AresParseDelegate parse, Func<IntPtr, T> convert) where T : class
 		{
 			var cb = Callback.GetObject<AresCallback<T>>(arg);
+			if (cb == null) {
+				// shouldn't happen, before getting here we create the callback
+				// so it should always resolve correctly.
+				throw new Exception("unresolved callback, should never happen");
+			}
 			IntPtr ptr;
 			var ret = parse(abuf, alen, out ptr);
 			if (ret != 0) {

@@ -239,7 +239,13 @@ namespace CAresSharp
 		}
 
 		[DllImport("cares")]
-		static extern int ares_query(IntPtr channel, string name, int dnsclass, ns_type type, Action<IntPtr, int, int, IntPtr, int> callback, IntPtr arg);
+		static extern void ares_query(IntPtr channel, string name, int dnsclass, ns_type type, Action<IntPtr, int, int, IntPtr, int> callback, IntPtr arg);
+
+		static void query<T>(IntPtr channel, string name, int dnsclass, ns_type type, Action<IntPtr, int, int, IntPtr, int> callback, Action<Exception, T> clrcb) where T : class
+		{
+			AresCallback<T> cb = new AresCallback<T>(clrcb);
+			ares_query(channel, name, dnsclass, type, callback, cb.Handle);
+		}
 
 		public void Resolve(string host, AddressFamily addressFamily, Action<Exception, Hostent> callback)
 		{
@@ -269,29 +275,31 @@ namespace CAresSharp
 			Resolve(host, AddressFamily.InterNetworkV6, callback);
 		}
 
+		[DllImport("cares")]
+		internal static extern void ares_free_data(IntPtr ptr);
+
+		#region MX
+
 		public void ResolveMX(string host, Action<Exception, MailExchange[]> callback)
 		{
-			AresCallback<MailExchange[]> cb = new AresCallback<MailExchange[]>(callback);
-			ares_query(channel, host, 1, ns_type.ns_t_mx, CallbackMX, cb.Handle);
+			query(channel, host, 1, ns_type.ns_t_mx, CallbackMX, callback);
 		}
 		
 		[DllImport("cares")]
 		unsafe static extern int ares_parse_mx_reply(IntPtr abuf, int alen, out IntPtr mx_out);
 		
-		[DllImport("cares")]
-		internal static extern void ares_free_data(IntPtr ptr);
-
 		static void CallbackMX(IntPtr arg, int status, int timeouts, IntPtr abuf, int alen)
 		{
 			Parse<MailExchange[]>(arg, abuf, alen, ares_parse_mx_reply, ares_mx_reply.convert);
 		}
+
+		#endregion
 		
 		#region NS
 
 		public void ResolveNS(string host, Action<Exception, Hostent> callback)
 		{
-			AresCallback<Hostent> cb = new AresCallback<Hostent>(callback);
-			ares_query(channel, host, 1, ns_type.ns_t_ns, CallbackNS, cb.Handle);
+			query(channel, host, 1, ns_type.ns_t_ns, CallbackNS, callback);
 		}
 
 		[DllImport("cares")]
@@ -312,8 +320,7 @@ namespace CAresSharp
 
 		public void ResolveSOA(string host, Action<Exception, SOAReply> callback)
 		{
-			AresCallback<SOAReply> cb = new AresCallback<SOAReply>(callback);
-			ares_query(channel, host, 1, ns_type.ns_t_soa, CallbackSOA, cb.Handle);
+			query(channel, host, 1, ns_type.ns_t_soa, CallbackSOA, callback);
 		}
 
 		[DllImport("cares")]
@@ -330,8 +337,7 @@ namespace CAresSharp
 
 		public void ResolveSRV(string host, Action<Exception, SRVReply[]> callback)
 		{
-			AresCallback<SRVReply[]> cb = new AresCallback<SRVReply[]>(callback);
-			ares_query(channel, host, 1, ns_type.ns_t_srv, CallbackSRV, cb.Handle);
+			query(channel, host, 1, ns_type.ns_t_srv, CallbackSRV, callback);
 		}
 
 		[DllImport("cares")]
@@ -347,8 +353,7 @@ namespace CAresSharp
 
 		public void ResolveTXT(string host, Action<Exception, string[]> callback)
 		{
-			AresCallback<string[]> cb = new AresCallback<string[]>(callback);
-			ares_query(channel, host, 1, ns_type.ns_t_txt, CallbackTXT, cb.Handle);
+			query(channel, host, 1, ns_type.ns_t_txt, CallbackTXT, callback);
 		}
 
 		[DllImport("cares")]

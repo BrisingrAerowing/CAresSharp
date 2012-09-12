@@ -57,19 +57,7 @@ namespace CAresSharp
 		public int UdpPort { get; set; }
 		public int TcpPort { get; set; }
 		
-		
 		public Action<CAresChannel, int, bool, bool> SocketCallback { get; set; }
-		/*
-			set {
-				if (value == null) {
-					cb = null;
-				} else {
-					cb = new CAresSocketCallback(value);
-					option_mask |= (int)ARES_OPT.SOCK_STATE_CB;
-				}
-			}
-		}
-		*/
 		
 		internal int option_mask;
 		

@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.Text;
 
 namespace CAresSharp
 {
@@ -293,8 +294,7 @@ namespace CAresSharp
 			}
 		}
 		
-		#region not working
-		/*
+/*
 		#region NS
 		
 		public void ResolveNS(string host, Action<Exception, Hostent> callback)
@@ -319,61 +319,88 @@ namespace CAresSharp
 		
 		#region SOA
 		#endregion
-		
+
+*/
+
 		#region SRV
 
 		unsafe struct ares_srv_reply {
 		     public ares_srv_reply *next;
-		     public ushort weight;
-		     public ushort priority;
-		     public ushort port;
 		     public sbyte *host;
+		     public ushort priority;
+		     public ushort weight;
+		     public ushort port;
 		};
-		
-		public class ServerReply
-		{
+
+		unsafe static int length(ares_srv_reply *reply) {
+			int n = 0;
+			for (var i = reply; i != null; i = i->next) {
+				n++;
+			}
+			return n;
 		}
-		
-		public void ResolveSRV(string host, Action<Exception, ServerReply[]> callback)
+
+		public void ResolveSRV(string host, Action<Exception, SRVReply[]> callback)
 		{
-			AresCallback<ServerReply[]> cb = new AresCallback<ServerReply[]>(callback);
+			AresCallback<SRVReply[]> cb = new AresCallback<SRVReply[]>(callback);
 			ares_query(channel, host, 1, ns_type.ns_t_srv, CallbackSRV, cb.Handle);
 		}
-		
+
 		[DllImport("cares")]
 		unsafe static extern int ares_parse_srv_reply(IntPtr abuf, int alen, out ares_srv_reply* reply);
-		
+
 		unsafe static void CallbackSRV(IntPtr arg, int status, int timeouts, IntPtr abuf, int alen)
 		{
-			var cb = Callback.GetObject<AresCallback<ServerReply[]>>(arg);
+			var cb = Callback.GetObject<AresCallback<SRVReply[]>>(arg);
 			ares_srv_reply *reply;
 			int r = ares_parse_srv_reply(abuf, alen, out reply);
 			if (r != 0) {
 				cb.End(Ensure.Exception(r), null);
 			} else {
-				
-				Console.WriteLine("NESAMONE");
+				int j = 0;
+				int n = length(reply);
+				var res = new SRVReply[n];
+				for (var i = reply; i != null; i = i->next) {
+					res[j] = new SRVReply() {
+						Weight = (int)(i->weight),
+						Priority = (int)(i->priority),
+						Port = (int)(i->port),
+						Host = new string(i->host)
+					};
+					j++;
+				}
+
+				cb.End(null, res);
 			}
 		}
 		#endregion
-		
+
 		#region TXT
-		
+
 		unsafe struct ares_txt_reply {
 			public ares_txt_reply *next;
-			public uint length;
-			public sbyte *txt;
+			public IntPtr txt;
+			public IntPtr length;
 		}
-		
+
 		public void ResolveTXT(string host, Action<Exception, string[]> callback)
 		{
 			AresCallback<string[]> cb = new AresCallback<string[]>(callback);
 			ares_query(channel, host, 1, ns_type.ns_t_txt, CallbackTXT, cb.Handle);
 		}
-		
+
 		[DllImport("cares")]
 		unsafe static extern int ares_parse_txt_reply(IntPtr abuf, int alen, out ares_txt_reply* reply);
-		
+
+		unsafe static int length(ares_txt_reply *reply)
+		{
+			int n = 0;
+			for (ares_txt_reply *i = reply; i != null; i = i->next) {
+				n++;
+			}
+			return n;
+		}
+
 		unsafe static void CallbackTXT(IntPtr arg, int status, int timeouts, IntPtr abuf, int alen)
 		{
 			var cb = Callback.GetObject<AresCallback<string[]>>(arg);
@@ -382,14 +409,19 @@ namespace CAresSharp
 			if (r != 0) {
 				cb.End(Ensure.Exception(r), null);
 			} else {
-				Console.WriteLine ("NESAMONE");
+				int n = length(reply);
+				int j = 0;
+				string[] res = new string[n];
+				for (ares_txt_reply *i = reply; i != null; i = i->next) {
+					res[j] = Marshal.PtrToStringAnsi(i->txt, (int)i->length);
+					j++;
+				}
+				cb.End(null, res);
 			}
 		}
-		
+
 		#endregion
-		*/
-		#endregion
-		
+
 		[DllImport("cares")]
 		static extern void ares_cancel(IntPtr channel);
 		

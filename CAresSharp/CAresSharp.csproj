@@ -46,6 +46,7 @@
     <Compile Include="Callbacks.cs" />
     <Compile Include="ares_mx_reply.cs" />
     <Compile Include="CAresChannel.cs" />
+    <Compile Include="SRVReply.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

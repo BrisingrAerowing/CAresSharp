@@ -184,23 +184,7 @@ namespace CAresSharp
 			
 			Destroy();
 		}
-		
-		
-		delegate int AresLongParseDelegate(IntPtr buf, int alen, out IntPtr host, IntPtr addrttls, IntPtr naddrttls);
 
-		static void LongParse(AresCallback<Hostent> cb, AresLongParseDelegate ares_parse, IntPtr buf, int alen)
-		{
-			IntPtr host;
-			int r = ares_parse(buf, alen, out host, IntPtr.Zero, IntPtr.Zero);
-			if (r != 0) {
-				cb.End(Ensure.Exception(r), null);
-			} else {
-				var he = hostent.GetHostent(host);
-				hostent.ares_free_hostent(host);
-				cb.End(null, he);
-			}
-		}
-		
 		delegate int AresParseDelegate(IntPtr buf, int alen, out IntPtr host);
 
 		static void Parse<T>(IntPtr arg, IntPtr abuf, int alen, AresParseDelegate parse, Func<IntPtr, T> convert) where T : class
@@ -223,19 +207,27 @@ namespace CAresSharp
 		[DllImport("cares")]
 		static extern int ares_parse_a_reply(IntPtr buf, int alen, out IntPtr host, IntPtr addrttls, IntPtr naddrttls);
 
+		static int ares_parse_a_reply2(IntPtr buf, int alen, out IntPtr host)
+		{
+			return ares_parse_a_reply(buf, alen, out host, IntPtr.Zero, IntPtr.Zero);
+		}
+
 		static void Callback4(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
 		{
-			var cb = Callback.GetObject<AresCallback<Hostent>>(arg);
-			LongParse(cb, ares_parse_a_reply, buf, alen);
+			Parse(arg, buf, alen, ares_parse_a_reply2);
 		}
 
 		[DllImport("cares")]
 		static extern int ares_parse_aaaa_reply(IntPtr buf, int alen, out IntPtr host, IntPtr addrttls, IntPtr naddrttls);
 
+		static int ares_parse_aaaa_reply2(IntPtr buf, int alen, out IntPtr host)
+		{
+			return ares_parse_aaaa_reply(buf, alen, out host, IntPtr.Zero, IntPtr.Zero);
+		}
+
 		static void Callback6(IntPtr arg, int status, int timeouts, IntPtr buf, int alen)
 		{
-			var cb = Callback.GetObject<AresCallback<Hostent>>(arg);
-			LongParse(cb, ares_parse_aaaa_reply, buf, alen);
+			Parse(arg, buf, alen, ares_parse_aaaa_reply2);
 		}
 
 		[DllImport("cares")]
